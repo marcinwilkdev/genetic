@@ -1,0 +1,9 @@
+[package]
+name = "genetyk"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tsp_parser = { git = "https://github.com/marcinwilkdev/tsp-parser" }
+rand = "0.8"
+clap = {version = "3.1" , features = ["derive"]}

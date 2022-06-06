@@ -1,0 +1,79 @@
+loop: {
+    selekcja rodzicow
+    krzyzowanie
+    mutacja
+    selekcja populacji
+}
+
+123456
+241563
+
+112211
+
+124356
+
+przepisujemy czesc z pierwszego rodzica ktora ma byc
+nastepnie probujemy przepisac reszte z drugiego rodzica
+jezeli dane elementy istnieja zostawiamy dziure
+nastepnie wypelniamy dziure po kolei elementami ktore brakuja
+w kolejnosci w jakiej wystepuja w drugim rodzicu
+
+wybor rodzica:
+- turniej, rozmiar turnieju pierwiastek z populacji (im lepsze prd tym wieksza szansa)
+- kolo ruletki (im lepsze prd tym wieksza szansa na wziecie do pary)
+
+krzyzowanie: (intensyfikacja)
+- brac czesci rozwiazania od jednego rozdica a reszte od drugieg,
+dla drugiego dziecka odwrotnie (UWAGA na niedopuszczalne rozwiazania)
+- prawdopodobienstwo krzyzowania (70% - 100%) (szansa na to ze dzieci nie powstana,
+moze byc mniej dzieci w kolejnym etapie lub zamiast dziecka rodzic lub
+nowych rodzicow i dopelnic reszte dzieci)
+
+mutacja (wstrzykiwanie nowych genów): (dywersyfikacja (mozna do puli rodzicow wrzucic kilka losowych rodzicow))
+- male prawdopodobienstwo mutacji (0,5% - 5%)
+- robimy jeden ruch (np invert)
+- probujemy robic n ruchow (invertow) kazde z prawdopodobienstwem (5%/n) (szansa na kilka mutacji)
+
+mozna robic kilka niezaleznych populacji (wyspy)
+mozna robic migracje (raz na jakis czas kilka osobnikow z jednej wyspy na druga (przeniesc lub clone))
+
+selekcja populacji:
+- branie pod uwage poprzednia populacje, rodzicow i dzieci i wziecie
+z tych trzech nowej populacji (rozmiar populacji zawsze staly)
+- mozna brac tylko dzieci lub laczymy dzieci ze stara populacja i robimy turniej / ruletke
+
+elitaryzm:
+- sortujemy osobnikow i kilkku najlepszych bierzemy na etapie selekcji populacji (elitarnych)
+- reszte bierzemy losowo z puli nowej populacji
+
+przedziwdzialanie stagnacji:
+- czy osobniki sa do siebie podobne czy nie
+- wstrzykiwanie losowych osobnikow, migracje z innych wysp, mutacje (zwiekszamy prawdopodobienstwo podczas stagnacji)
+- n iteracji bez poprawy -> prawdopodobienstwo mutacji x2
+
+warunek stopu:
+- standardowo
+
+optymalizacje:
+- podobne jak tabu search
+
+rownoleglosc:
+- krzyzowanie rownolegle mozna zrobic
+
+algorytm memetyczny:
+- wieksza szansa ze dziecko sie nauczy czegos co rodzice umieja mimo tego
+ze nie maja tego w genach bo moga nauczyc
+- po krzyzowaniu, rozwin dziecko (symulacja uczenia)
+- wez osobnika skrzyzowanego i zastosuj heurystyke jakas
+- duza szansa ze poprawi genetyka
+- krotko trwajaca heurystyka
+
+informacje dodatkowe:
+- krotko zyjacy rodzice (kiedy zastepujemy rodzicow dziecmi)
+- wpisywac osobnikom wiek i po pewnym czasie musza byc wyrzuceni
+- uzaleznic prawdopodobienstwo krzyzowania od wieku
+
+genotyp - co jest w genach (permutacja)
+fenotyp - co wyniklo z genow (zbior krawedzi - trasa)
+funkcja przystosowania - szansa ze przetrwam wyzsza temperature (odwrotnosc funkcji celu)
+
