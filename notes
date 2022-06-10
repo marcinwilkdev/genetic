@@ -77,3 +77,11 @@ genotyp - co jest w genach (permutacja)
 fenotyp - co wyniklo z genow (zbior krawedzi - trasa)
 funkcja przystosowania - szansa ze przetrwam wyzsza temperature (odwrotnosc funkcji celu)
 
+
+SPRAWOZDANIE:
+1. Zlozonosc obliczeniowa (pomiary, wyliczenie teoretyczne, wyjasnienie).
+2. Invert vs swap
+3. Symetryczny vs Asymetryczny
+4. Zależność wielkosci populacji od wielkosci problemu
+5. Memetyka test??? (jaki procent dzieci sie uczy, ile daje memetyka)
+6. Pokazac ze mutacja jest chujowa
