@@ -29,14 +29,10 @@ fn run_from_file(file_name: &str, opt: u32) {
     let iterations = if file_name.contains("atsp") {
         10 * dimension
     } else {
-        dimension / 2
+        dimension
     };
-
-    let population_size = if file_name.contains("atsp") {
-        10 * dimension
-    } else {
-        10 * dimension
-    };
+    
+    let population_size = 10 * dimension;
 
     let elites = if population_size / 2 == 0 {
         1
@@ -49,6 +45,7 @@ fn run_from_file(file_name: &str, opt: u32) {
     let mutation_prob = 0.02;
     let stagnation_iter = iterations / 10;
     let mutation_steps = 4;
+    let memetic_fraction = 0.1;
 
     let genetic = Genetic::new(
         opt,
@@ -61,6 +58,7 @@ fn run_from_file(file_name: &str, opt: u32) {
         stagnation_iter,
         mutation_steps,
         4,
+        memetic_fraction,
     );
 
     let route = genetic.get_route(&tsp);

@@ -28,6 +28,7 @@ pub struct Genetic {
     stagnation_iter: usize,
     max_mutation_multiply: usize,
     threads: usize,
+    memetic_fraction: f64,
 }
 
 impl Genetic {
@@ -42,6 +43,7 @@ impl Genetic {
         stagnation_iter: usize,
         max_mutation_multiply: usize,
         threads: usize,
+        memetic_fraction: f64,
     ) -> Self {
         Genetic {
             opt,
@@ -54,6 +56,7 @@ impl Genetic {
             stagnation_iter,
             max_mutation_multiply,
             threads,
+            memetic_fraction,
         }
     }
 
@@ -79,14 +82,15 @@ impl Genetic {
         }
     }
 
-    // maybe some part of population fully random?
     fn initalize_genetic_state(&self, tsp: &Tsp) -> GeneticState {
-        let mut population = Arc::new(Mutex::new(HashSet::with_capacity(2 * self.population_size)));
-        let mut elites = Arc::new(Mutex::new(Vec::with_capacity(self.elites_count)));
+        let population = Arc::new(Mutex::new(HashSet::with_capacity(2 * self.population_size)));
+        let elites = Arc::new(Mutex::new(Vec::with_capacity(self.elites_count)));
 
         let elites_count = self.elites_count;
 
-        let population_left = Arc::new(Mutex::new(self.population_size / 10));
+        let population_left = Arc::new(Mutex::new(
+            (self.population_size as f64 * self.memetic_fraction) as usize,
+        ));
 
         let mut threads = Vec::with_capacity(self.threads);
 
@@ -121,7 +125,7 @@ impl Genetic {
         }
 
         for thread in threads {
-            thread.join();
+            thread.join().unwrap();
         }
 
         {
@@ -164,6 +168,13 @@ impl TspHeuristic for Genetic {
 
         let mut curr_mutation_prob = self.mutation_prob;
 
+        println!(
+            "{}\t {}\t {:.2}%",
+            0,
+            best_route_len,
+            prd(best_route_len, self.opt)
+        );
+
         for i in 0..self.iterations {
             let parents = genetic_state.parents_selection(self.pair_count);
 
@@ -174,6 +185,7 @@ impl TspHeuristic for Genetic {
                 tsp,
                 curr_mutation_prob,
                 self.threads,
+                self.memetic_fraction,
             );
 
             genetic_state.pick_population(self.population_size);
@@ -184,13 +196,28 @@ impl TspHeuristic for Genetic {
                 best_route_len = curr_best_route_len;
                 stagnation_iter = self.stagnation_iter;
 
+                let curr_prd = prd(best_route_len, self.opt);
+
+                println!(
+                    "{}\t {}\t {:.2}%",
+                    i + 1,
+                    best_route_len,
+                    curr_prd
+                );
+
+                if curr_prd == 0.0 {
+                    break;
+                }
+
                 if mutation_multiplier > 1 {
                     mutation_multiplier = 1;
                     curr_mutation_prob = self.mutation_prob;
                 }
             }
 
-            stagnation_iter -= 1;
+            if stagnation_iter > 0 {
+                stagnation_iter -= 1;
+            }
 
             if stagnation_iter == 0 {
                 if mutation_multiplier < self.max_mutation_multiply {
@@ -199,18 +226,9 @@ impl TspHeuristic for Genetic {
                     curr_mutation_prob *= self.mutation_prob * 100.0;
                 }
 
+                genetic_state.gen_random_population(self.population_size, tsp);
+
                 stagnation_iter = self.stagnation_iter;
-            }
-
-            if i % (self.iterations / 10) == 0 {
-                let best_route_len = genetic_state.elites.lock().unwrap()[0].get_route_len();
-
-                println!(
-                    "{}\t {}\t {:.2}%",
-                    i,
-                    best_route_len,
-                    prd(best_route_len, self.opt)
-                );
             }
         }
 
@@ -230,7 +248,7 @@ mod tests {
     fn population_generates_correctly() {
         let tsp = TspParser::from_file("test_files/berlin52.tsp").unwrap();
 
-        let genetic = Genetic::new(7542, 1000, 100, 5, 50, 1.0, 0.02, 5000, 4, 1);
+        let genetic = Genetic::new(7542, 1000, 100, 5, 50, 1.0, 0.02, 5000, 4, 1, 1.0);
 
         let GeneticState {
             population, elites, ..
@@ -244,7 +262,7 @@ mod tests {
     fn parents_generate_correctly() {
         let tsp = TspParser::from_file("test_files/berlin52.tsp").unwrap();
 
-        let genetic = Genetic::new(7542, 1000, 100, 5, 50, 1.0, 0.02, 5000, 4, 1);
+        let genetic = Genetic::new(7542, 1000, 100, 5, 50, 1.0, 0.02, 5000, 4, 1, 1.0);
 
         let genetic_state = genetic.initalize_genetic_state(&tsp);
 
@@ -300,24 +318,6 @@ mod tests {
         let first_parent = PopulationMember::gen_random(&tsp);
         let second_parent = PopulationMember::gen_random(&tsp);
 
-        for i in 0..tsp.get_dimension() {
-            if i == first_index || i == second_index {
-                print!(" | ")
-            };
-
-            print!("{} ", first_parent.get_route()[i]);
-        }
-
-        println!();
-
-        for i in 0..tsp.get_dimension() {
-            if i == first_index || i == second_index {
-                print!(" | ")
-            };
-
-            print!("{} ", second_parent.get_route()[i]);
-        }
-
         let kid = GeneticState::cross_kid(
             &first_parent,
             &second_parent,
@@ -327,16 +327,6 @@ mod tests {
             0.0,
             false,
         );
-
-        println!();
-
-        for i in 0..tsp.get_dimension() {
-            if i == first_index || i == second_index {
-                print!(" | ")
-            };
-
-            print!("{} ", kid.get_route()[i]);
-        }
 
         let mut cities = vec![false; tsp.get_dimension()];
 
@@ -353,7 +343,7 @@ mod tests {
     fn population_picked_correctly() {
         let tsp = TspParser::from_file("test_files/berlin52.tsp").unwrap();
 
-        let genetic = Genetic::new(7542, 1000, 100, 5, 50, 1.0, 0.02, 5000, 4, 1);
+        let genetic = Genetic::new(7542, 1000, 100, 5, 50, 1.0, 0.02, 5000, 4, 1, 1.0);
 
         let mut genetic_state = genetic.initalize_genetic_state(&tsp);
 
@@ -366,6 +356,7 @@ mod tests {
             &tsp,
             genetic.mutation_prob,
             1,
+            1.0,
         );
 
         genetic_state.pick_population(genetic.population_size);

@@ -24,7 +24,6 @@ impl Hash for PopulationMember {
 }
 
 impl PopulationMember {
-    // split into new and new_enhanced
     pub fn new_enhanced(mut route: Vec<usize>, tsp: &Tsp) -> PopulationMember {
         match tsp.get_tsp_type() {
             TspType::Symmetric => route = best_neighbourhood_invert(tsp, route),
@@ -41,7 +40,7 @@ impl PopulationMember {
         }
     }
 
-    pub fn new(mut route: Vec<usize>, tsp: &Tsp) -> PopulationMember {
+    pub fn new(route: Vec<usize>, tsp: &Tsp) -> PopulationMember {
         let route_len = tsp.get_route_len(&route).unwrap();
         let chance = 1.0 / route_len as f64;
 

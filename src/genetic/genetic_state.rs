@@ -52,7 +52,7 @@ impl GeneticState {
     fn select_parent(&self, chances_sum: f64) -> PopulationMember {
         let mut random_value = thread_rng().gen::<f64>() * chances_sum;
 
-        let mut curr_population = self.population.lock().unwrap();
+        let curr_population = self.population.lock().unwrap();
         let mut curr_population_member = curr_population.iter().next().unwrap();
 
         for population_member in &*curr_population {
@@ -76,6 +76,7 @@ impl GeneticState {
         tsp: &Tsp,
         mutation_prob: f64,
         threads: usize,
+        memetic_fraction: f64,
     ) {
         let parents_per_thread = parents.len() / threads;
         let parents_iter = parents.chunks(parents_per_thread);
@@ -93,21 +94,13 @@ impl GeneticState {
                 for i in 0..pairs_chunk.len() {
                     let pair = &pairs_chunk[i];
 
-                    let (first_kid, second_kid) = if i % 10 == 0 {
+                    let modulus = (1.0 / memetic_fraction).round() as usize;
+
+                    let (first_kid, second_kid) = if i % modulus == 0 {
                         Self::cross_pair(pair, crossing_prob, dimension, &tsp, mutation_prob, true)
                     } else {
-                        Self::cross_pair(
-                            pair,
-                            crossing_prob,
-                            dimension,
-                            &tsp,
-                            mutation_prob,
-                            false,
-                        )
+                        Self::cross_pair(pair, crossing_prob, dimension, &tsp, mutation_prob, false)
                     };
-
-                    // let (first_kid, second_kid) =
-                    //     Self::cross_pair(&pair, crossing_prob, dimension, &tsp, mutation_prob);
 
                     if let Some(ref kid) = first_kid {
                         if population_clone.lock().unwrap().insert(kid.clone()) {
@@ -125,7 +118,7 @@ impl GeneticState {
         }
 
         for thread in threads {
-            thread.join();
+            thread.join().unwrap();
         }
     }
 
@@ -259,11 +252,33 @@ impl GeneticState {
             .map(|p| p.get_chance())
             .sum::<f64>();
 
-        // this loops forever sometimtes
         while new_population.len() < population_size {
             new_population.insert(self.select_parent(chances_sum));
         }
 
         *self.population.lock().unwrap() = new_population;
+    }
+
+    pub fn gen_random_population(&mut self, population_size: usize, tsp: &Tsp) {
+        let mut new_population = HashSet::with_capacity(tsp.get_dimension());
+        let mut locked_elites = self.elites.lock().unwrap();
+
+        for elite in &*locked_elites {
+            new_population.insert(elite.clone());
+        }
+
+        for _ in 0..population_size - locked_elites.len() {
+            let mut member = PopulationMember::gen_random(tsp);
+
+            while !new_population.insert(member.clone()) {
+                member = PopulationMember::gen_random(tsp);
+            }
+
+            if locked_elites[locked_elites.len() - 1].get_route_len() > member.get_route_len() {
+                Genetic::insert_elite(&mut locked_elites, member);
+            }
+        }
+
+        self.population = Arc::new(Mutex::new(new_population));
     }
 }

@@ -18,35 +18,35 @@ fn main() {
 }
 
 fn run_from_file(file_name: &str, opt: u32) {
-    println!("{} {}", file_name, opt);
-
     let tsp = TspParser::from_file(file_name).unwrap();
 
     let dimension = tsp.get_dimension();
 
-    let iterations = if file_name.contains("atsp") {
+    let mut iterations = if file_name.contains("atsp") {
         10 * dimension
     } else {
-        dimension / 2
+        dimension
     };
 
-    let population_size = if file_name.contains("atsp") {
-        10 * dimension
-    } else {
-        10 * dimension
-    };
+    if iterations < 100 {
+        iterations = 100;
+    }
+
+    let population_size = 10 * dimension;
 
     let elites = if population_size / 2 == 0 {
         1
     } else {
-        population_size / 3
+        population_size / 2
     };
 
     let pairs = population_size / 2;
     let kid_prob = 0.9;
     let mutation_prob = 0.02;
-    let stagnation_iter = iterations / 10;
+    let stagnation_iter = iterations / 5;
     let mutation_steps = 4;
+    let memetic_fraction = 0.1;
+    let threads = 5;
 
     let genetic = Genetic::new(
         opt,
@@ -58,12 +58,17 @@ fn run_from_file(file_name: &str, opt: u32) {
         mutation_prob,
         stagnation_iter,
         mutation_steps,
-        4,
+        threads,
+        memetic_fraction,
     );
 
     let route = genetic.get_route(&tsp);
-    let route_len = tsp.get_route_len(&route).unwrap();
 
-    println!("{:?}", route);
-    println!("\nBest route len: {}", route_len);
+    println!();
+
+    for city in &route {
+        print!("{} ", city);
+    }
+
+    println!();
 }
